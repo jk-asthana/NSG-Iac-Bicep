@@ -1,0 +1,76 @@
+parameters:
+- name: project
+  displayName: Project Name
+  type: string  
+  default: NSG
+
+- name: infra
+  displayName: Infra Folder
+  type: string
+  default: WebApp
+  values:
+  - CDN
+  - StorageAccount
+  - WebApp  
+
+- name: environment
+  displayName: Environment
+  type: string
+  default: Dev
+  values:
+  - Blue
+  - Green  
+
+- name: apply
+  type: boolean
+  displayName: "Apply Changes?"
+  default: false
+
+trigger: none
+
+stages:
+
+- stage: validate
+  displayName: Validate in ${{ upper(parameters.environment) }}
+  variables:
+  - template: '/Pipeline/common_variable_templates/${{ parameters.environment }}.yaml'
+  jobs:
+  - template: '/Pipeline/common_job_templates/bicep_validate_job_template.yaml'
+    parameters:
+      serviceConnection: ${{ variables.serviceConnection }}
+      ResourceGroup: ${{ variables.ResourceGroup }}
+      biceptemplate: './Biceps/resources/${{ parameters.infra }}/main.bicep'
+      paramTemplate: './Biceps/resources/${{ parameters.infra }}/Parameters/${{ parameters.environment }}.parameters.json'
+      deploymentname: '${{ parameters.infra }}-$(Get-Date -Format yyyyMMddhhmm)-$(Build.BuildID)'
+      environment: ${{ parameters.environment }}
+
+- ${{ if eq(parameters.apply, true) }}:
+  - stage: DeployToBlue
+    displayName: Deploy in Blue
+    dependsOn: validate
+    variables:
+    - template: '/Pipeline/common_variable_templates/Blue.yaml'
+    jobs:
+    - template: '/Pipeline/common_job_templates/bicep_deploy_job_template.yaml'
+      parameters:
+        serviceConnection: ${{ variables.serviceConnection }}
+        ResourceGroup: ${{ variables.ResourceGroup }}
+        biceptemplate: './Biceps/resources/${{ parameters.infra }}/main.bicep'
+        paramTemplate: './Biceps/resources/${{ parameters.infra }}/Parameters/Blue.parameters.json'
+        deploymentname: '${{ parameters.infra }}-$(Get-Date -Format yyyyMMddhhmm)-$(Build.BuildID)'
+        environment: ${{ parameters.environment }}
+  - stage: DeployToGreen
+    displayName: Deploy in Green
+    dependsOn: validate
+    variables:
+    - template: '/Pipeline/common_variable_templates/Green.yaml'
+    jobs:
+    - template: '/Pipeline/common_job_templates/bicep_deploy_job_template.yaml'
+      parameters:
+        serviceConnection: ${{ variables.serviceConnection }}
+        ResourceGroup: ${{ variables.ResourceGroup }}
+        biceptemplate: './Biceps/resources/${{ parameters.infra }}/main.bicep'
+        paramTemplate: './Biceps/resources/${{ parameters.infra }}/Parameters/Green.parameters.json'
+        deploymentname: '${{ parameters.infra }}-$(Get-Date -Format yyyyMMddhhmm)-$(Build.BuildID)'
+        environment: ${{ parameters.environment }}
+        

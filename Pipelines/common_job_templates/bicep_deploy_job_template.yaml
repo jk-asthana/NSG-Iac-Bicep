@@ -1,0 +1,31 @@
+jobs:
+  - deployment: Deployjob
+    displayName: Deploy ${{ parameters.environment }}
+    environment: ${{ upper(parameters.environment) }}    
+    pool: 
+      vmImage: 'ubuntu-20.04'      
+      workspace:
+        clean: all
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+            
+          - checkout: self
+
+          - task: Bash@3
+            displayName: 'Azure Login'
+            inputs:
+              targetType: 'inline'
+              workingDirectory: $(System.DefaultWorkingDirectory)
+              Script: |                
+                az login --identity --username ${{ parameters.client_id }}             
+           
+          - task: PowerShell@2
+            displayName: 'Apply Changes'
+            inputs:
+              targetType: 'inline'
+              workingDirectory: $(System.DefaultWorkingDirectory)
+              Script: |
+                az deployment group create --resource-group ${{ parameters.saResourceGroup }} --name ${{ parameters.deploymentname }} --template-file ${{ parameters.biceptemplate }} --no-prompt true --parameters ${{ parameters.paramTemplate }}
+          

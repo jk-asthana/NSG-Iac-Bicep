@@ -1,0 +1,41 @@
+jobs:
+  - deployment: Validate
+    displayName: Validate ${{ parameters.environment }}
+    environment: ${{ upper(parameters.environment) }}
+    pool:       
+      vmImage: 'ubuntu-20.04'
+      workspace:
+        clean: all
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+            
+          - checkout: self         
+
+          - task: Bash@3
+            displayName: 'Azure Login'
+            inputs:
+              targetType: 'inline'
+              workingDirectory: $(System.DefaultWorkingDirectory)
+              Script: |               
+                az login --identity --username ${{ parameters.client_id }}
+            
+          - task: PowerShell@2
+            displayName: 'Validate Template'
+            inputs:
+              targetType: 'inline'
+              workingDirectory: $(System.DefaultWorkingDirectory)
+              Script: |
+                Write-Host "RG: ${{ parameters.saResourceGroup }}, depname:  ${{ parameters.deploymentname }},  ${{ parameters.biceptemplate }} , ${{ parameters.paramTemplate }}"
+                az deployment group validate --resource-group ${{ parameters.saResourceGroup }} --name ${{ parameters.deploymentname }} --template-file ${{ parameters.biceptemplate }} --no-prompt true --parameters ${{ parameters.paramTemplate }}
+           
+
+          - task: PowerShell@2
+            displayName: 'Verify Changes'
+            inputs:
+              targetType: 'inline'
+              workingDirectory: $(System.DefaultWorkingDirectory)
+              Script: |
+                az deployment group what-if --resource-group ${{ parameters.saResourceGroup }} --name ${{ parameters.deploymentname }} --template-file ${{ parameters.biceptemplate }} --no-prompt true --parameters ${{ parameters.paramTemplate }}
+          

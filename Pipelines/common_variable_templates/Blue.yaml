@@ -1,0 +1,7 @@
+variables:
+- name: serviceConnection
+  value: ''
+- name: ResourceGroup
+  value: nsg-ne-assessment-blue-rg-app-01
+- name: client_id
+  value: 

@@ -1,0 +1,40 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+      "storageaccountdetails" :{
+        "value": {
+          "saName": {
+            "businessgroup": "nsg",
+            "environment": "blue",
+            "instance": "01",
+            "project": "nsg"
+          },
+          "saType": "Standard_LRS",
+          "saKind": "StorageV2",
+          "saPublicaccess": "Enabled",
+          "saResourceGroup": "nsg-ne-assessment-blue-rg-app-01",
+          "fileshares": [
+              {
+                "name": "nsg-fileshare",
+                "quota": 6
+              },
+              {
+                "name": "nsg-backup",
+                "quota": 5
+              }
+            ],
+          "containers": ["nsgbluedefaultblob"]
+        }
+      },
+      "storageaccounttagvalues":{
+        "value": {
+            "managed_by": "Bicep",
+            "cost_centre": "123456",
+            "Project": "NSG",
+            "Business": "Housing",
+            "Service": "NSG"            
+        }
+      }
+    }
+  }
